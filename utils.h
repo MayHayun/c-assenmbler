@@ -1,38 +1,37 @@
+#ifndef _utils_H_
+#define _utils_H_
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "toBinary.h"
-
-#define COMMAND_MAX_LENGTH 31
+#define MAX_LABEL_LENGTH 31
 #define MAX_LINE_LENGTH 81
 #define MAX_COMMANDS_IN_MACRO 6
-#define MAX_LABEL_LENGTH 31
 
+
+
+/* i think this is not belong here*/
 typedef struct commandsStruct{
-    char commandName[COMMAND_MAX_LENGTH];
+    char commandName[MAX_LABEL_LENGTH];
     int opcode;
     int funct;
-    int numOfParam; 
+    int numOfParam;
 }commandsStruct;
 
-void freeList1(WORD *head);
-void freeList2(symbolLink *head);
-struct MACRO *head = NULL;
+int isNum(char *str);
+char *cutWhiteChars(char *str);
+
 int move_to_none_white(char line[], int i);
 int skip(char line[]);
-void preProcessing(FILE *fileName, char *nameOfFile);
-int getWord(char *word, char line[], int i);
-void trimTrailing(char * str);
-int isNum(char *str);
-int isNameOk(char line []);
-int isARegister(char []);
+int isAIntNum(char []);
 int isACommand(char []);
-int isANaturalNum(char);
-int giveTheLastNoneWhiteIndex(char line[]);
-int countWords(char line []);
-
-
-int isLableDec(char *lable);
+int isARegister(char []);
+int isNameOk(char line []);
 commandsStruct *findCommand(char * command);
-int isANum(char *param);
-char *cutWhiteChars(char *str);
+int isLableDec(char *lable);
+int countWords(char line []);
+void trimTrailing(char * str);
+int countCommas(char line []);
+int isCurNumOfWords(char buffer[], int a);
+int isValidCommas(int num, char str[]);
+
+#endif

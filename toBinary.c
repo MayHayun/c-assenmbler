@@ -4,8 +4,26 @@
 #include <ctype.h>
 
 #include "toBinary.h"
-#include "utils.h"
 
+int IC; /*holds the address of the word in the CPU*/
+int DC; /*holds the num of commands that are in the data image*/
+
+
+/*a func to create the output file - in hex base*/
+void output(WORD *head, char *fileName)
+{
+  int address = 100;
+  FILE *output;
+  WORD *ptr = head;
+  output = fopen(strcat(fileName, "Op.ob") ,"w");
+  fprintf(output,"\t\t\t%d\t%d\n",IC-100-DC,DC);
+  while(ptr != NULL && address <= IC)
+  {
+    binToSpecial(ptr->word,address,output);
+    ptr = ptr->next;
+    address++;
+  }
+}
 
 /* func that goes over the given input and codes it into binary excluding lables */
 WORD *firstPass(FILE *filePointer, symbolLink *headOfTable)
@@ -17,12 +35,12 @@ WORD *firstPass(FILE *filePointer, symbolLink *headOfTable)
     symbolLink *lable;
     WORD *headOfFile = (struct WORD*)malloc(sizeof(struct WORD));
     headOfFile->next = NULL;
-    
+    IC = 100;
+    DC = 0;
     while(fgets(line, 81, filePointer))
     {
       strcpy(lineCopy, line);
       token = strtok(line, " :\t");
-
       if((lable = findSymbol(headOfTable, token)) != NULL){
         char *tokenCopy = (char *)malloc(81);
         lable->adress = IC;
@@ -95,6 +113,21 @@ void secondPass(FILE *filePointer, WORD *headOfFile, symbolLink *headOfTable, ch
   }
 }
 
+/* func that free the memory stormage from a given WORD */
+void freeList1(WORD *head)
+{
+  WORD *current = head;
+  WORD *nextOne = head->next;
+
+  while(current != NULL)
+  {
+    free(current);
+    current = nextOne;
+    if( current != NULL)
+      nextOne = current->next;
+  }
+}
+
 /* func that receives a command sentence and codes it into binary code */
 void toBinaryCommand(char line[], symbolLink *headOfTable, WORD *headOfFile)
 {
@@ -114,7 +147,7 @@ void toBinaryCommand(char line[], symbolLink *headOfTable, WORD *headOfFile)
     link->word[commandFound->opcode] = 1;
     link->word[18] = 1;
     addWord(headOfFile, link);
-    *(restOfString + strlen(restOfString)) = '\n';
+    *(restOfString + strlen(restOfString)) = '\0';
     if(commandFound->numOfParam != 0)
       restOfString = strtok(NULL, command);
     deliveryForBinary(commandFound, restOfString, headOfTable, headOfFile);
@@ -219,7 +252,6 @@ void deliveryForBinary(commandsStruct *command ,char myStr[], symbolLink *headOf
             link->word[0] = 1;
           else
             link->word[6] = 1;
-
         }
 
         /* Delivery 3 */
@@ -260,7 +292,6 @@ void deliveryForBinary(commandsStruct *command ,char myStr[], symbolLink *headOf
             link->word[7] = 1;
           }
         }
-
         if(command->numOfParam == 2 && !isDest)
         {
           char temp[81];
@@ -271,6 +302,7 @@ void deliveryForBinary(commandsStruct *command ,char myStr[], symbolLink *headOf
             temp[j] = lineCopy[i];
           token = temp;
           *(token + j) = '\0';
+          trimTrailing(token);
         }
         else
           token = NULL;
@@ -307,6 +339,7 @@ void extraWordsToBinary(char *param, WORD *headOfFile, symbolLink *headOfTable)
       addWord(headOfFile, link);
     }else if(findSymbol(headOfTable,cutWhiteChars(param)) != NULL)
     {
+
       WORD *link1 = (struct WORD*)malloc(sizeof(struct WORD));
       WORD *link2 = (struct WORD*)malloc(sizeof(struct WORD));
       zeroMe(link1->word);

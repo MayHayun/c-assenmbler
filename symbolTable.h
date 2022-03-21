@@ -1,6 +1,13 @@
+#ifndef _symbolTable_H_
+#define _symbolTable_H_
+
 #include <stdio.h>
 
 #define CUT "\t ,\n"
+
+
+
+
 
 /*an object that holds all info of a lable and a pointer to the next(implementation of linked list)*/
 typedef struct symbolLink
@@ -14,6 +21,10 @@ typedef struct symbolLink
 
 }symbolLink;
 
+void freeList2(symbolLink *head);
+
 symbolLink *symboleTableCreat(FILE *filePointer);
 symbolLink *addSymbol(symbolLink *head, char lableName[]);
 struct symbolLink *findSymbol(struct symbolLink *head, char lableName[]);
+
+#endif

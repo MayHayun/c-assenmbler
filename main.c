@@ -1,8 +1,11 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 #include "toBinary.h"
-#include "validation.h"
+#include "preProcess.h"
+
 
 #define FILE_NAME_MAX_SIZE 40
 
@@ -21,58 +24,65 @@ int fileEndingValid( char *fileName ){
     return 0;
 }
 
-int execute(char * fileName){
-  char * fileNameCopy;
-  char * copy2;
+int execute(char * fileName)
+{
+  char fileNameCopy[FILE_NAME_MAX_SIZE];
+  char copy2[FILE_NAME_MAX_SIZE];
   FILE *filePtr;
-  LIST *l;
+  LIST *l = newList();
   char * token;
   WORD *headOfFile = NULL;
   symbolLink *head;
-
   filePtr = fopen(fileName, "r");
   l = validNames(filePtr, fileName);
-  fseek(filePtr, 0, SEEK_SET);
-  
+  fclose(filePtr); 
+  filePtr = fopen(fileName, "r");
   if(!validation( filePtr , l))
     return 0;
-
-  strcpy( copy2, fileName );
-  token = strtok(copy2, ".as");
-  fseek(filePtr, 0, SEEK_SET);
+  fclose(filePtr); 
+  filePtr = fopen(fileName, "r");
+  strcpy(copy2, fileName);
+  token = strtok(copy2, ".");
+  strcpy(fileNameCopy, token);
   preProcessing(filePtr, token);
   fclose(filePtr); 
-
-  filePtr = fopen(strcat(token, ".ob"), "r");
+  strcat(fileNameCopy, ".ob");
+  filePtr = fopen(fileNameCopy, "r");
   head = symboleTableCreat(filePtr);
-  fseek(filePtr, 0, SEEK_SET);
+  fclose(filePtr); 
+  filePtr = fopen(fileNameCopy, "r");
   headOfFile = firstPass(filePtr, head);
-  fseek(filePtr, 0, SEEK_SET);
-  secondPass(filePtr, headOfFile, head, token);
+  fclose(filePtr); 
+  filePtr = fopen(fileNameCopy, "r");
+  secondPass(filePtr, headOfFile, head, strtok(fileNameCopy, "."));
   headOfFile = headOfFile->next;
-  output(headOfFile);
-  freeList(headOfFile);
+  output(headOfFile, strtok(fileNameCopy, "."));
+  freeList1(headOfFile);
   freeList2(head);
+  return 1;
 }
 
-int main(int argc, char *argv[]){
-
+int main(int argc, char *argv[])
+{
   int i;
   char fileName[FILE_NAME_MAX_SIZE];
 
-  if ( argc == 1 ){
+
+  if (argc == 1 )
+  {
       printf("No files were given for the program...\n");
       exit(0);
   }
   
-  for( i=1; i < argc; i++){
+  for( i=1; i < argc; i++)
+  {
     strcpy(fileName, argv[i]);
-    if( fileEndingValid(fileName) )
+    if( fileEndingValid(fileName)){
       if(!execute(fileName))
-        printf("because of the errorrs the file did not compile...\n");
-    else
-      printf("file: %s does not ends with \".as\"  ...\n", fileName);
+        printf("the file: %s you have inputed failed to compile- hence no output was created...\n", argv[i]);
+      else
+        printf("an output filewas created for -> %s you have inputed\n", argv[i]);
+    }
   }
-  
   return 1;
 }

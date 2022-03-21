@@ -6,13 +6,12 @@
 #include <string.h>
 #include <ctype.h>
 
-
  typedef struct NODE{
   char *val;
   int mac;
   int ext;
   int ent;
-  int labDec;
+  int labDec; /* did we declare in it or not -> boolean */
   struct NODE *next;
 } NODE;
 
@@ -26,6 +25,6 @@ LIST* newList();
 void printList(LIST *l);
 void freeList(LIST*); /* not exist yet */
 
-NODE* findNode(LIST *l, char name[]);
+NODE* getNode(LIST *l, char name[]);
 
 #endif

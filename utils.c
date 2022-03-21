@@ -4,8 +4,6 @@
 #include <ctype.h>
 
 #include "utils.h"
-#include "toBinary.h"
-#include "symbolTable.h"
 
 /* func that checks if a given operand in string type is a number or not */
 int isNum(char *str)
@@ -15,22 +13,17 @@ int isNum(char *str)
     return 0;
 }
 
-/* func that removes white chars from a given string */
-char *cutWhiteChars(char *str)
-{
-    char *newStr;
-    int i, j = 0;
-    newStr = malloc(strlen(str) * sizeof(char));
-    for(i = 0; i < strlen(str); i++)
-    {
-        if(!isspace(*(str + i)))
-        {
-            *(newStr + j) = *(str + i);
-            j++;
-        }
-    }
-    *(newStr + j) = '\0';
-    return newStr;
+
+char * cutWhiteChars( char *old ){
+    char *newstr = malloc(strlen(old)+1);
+    
+    char *np = newstr, *op = old;
+    do {
+        if (!isspace(*op))
+            *np++ = *op;
+    } while (*op++);
+    
+    return newstr;
 }
 
 commandsStruct ourCommands[] = {
@@ -64,76 +57,47 @@ commandsStruct ourCommands[] = {
     {"stop", 15, 0, 0}
 };
 
-/*a func to trim the white chars in the end of a string*/
-void trimTrailing(char * str){
-    int index = -1;
-    int i;
-
-    i = 0;
-    while(str[i] != '\0')
-    {
-        if(str[i] != ' ' && str[i] != '\t' && str[i] != '\n')
-        {
-            index= i;
-        }
-
-        i++;
-    }
-    str[index + 1] = '\0';
-}
-
-int move_to_none_white(char line[], int i)
+/* func to skip all white chars */
+int move_to_none_white(char *line, int i)
 {
-    for(; i < MAX_LINE_LENGTH-1; i++)
+    for(; i < strlen(line); i++)
     {
         if(!isspace(line[i]))
             return i;
     }
     return i;
 }
- 
-int skip(char line[])
- {
-     int i = 0;
-     i = move_to_none_white(line, i);
-     if(line[i] == ';' || line[i-1] == '\n')
-         return 1;
-     return 0;
- }
 
-int isNumber(char input[]){
+
+/* check if a line is comment or empty in assembly */
+int skip(char line[])
+{
+    int i = 0;
+    i = move_to_none_white(line, i);
+    if(line[i] == '\0' || line[i] == ';' || line[i] == '\n')
+        return 1;
+    return 0;
+}
+
+
+int isAIntNum(char input[]){
   int i = move_to_none_white(input,0);
-  if(input[i] == '-' || input[i] == '+')
+  if(input[i] == '-' || input[i] == '+'){
     i++;
+  }
   while(input[i]!='\0'){
-    if(input[i] == '-' || input[i] == '+')
+    if(input[i] == '-' || input[i] == '+'){
       return 0;
-    else if(!isdigit(input[i]))
+    }
+    
+    if ( !isdigit(input[i]) ){
       return 0;
+    }
     i++;
   }
   return 1;
 }
 
-int isANaturalNum(char c){
-  if(c <= '9' && c>= '0')
-    return 1;
-  return 0;
-}
-
-/*a func to get the command object that contains the command's info*/
-commandsStruct *findCommand(char * command)
-{
-    int i = 0;
-    for(; i < 16; i++)
-    {
-        if(!strcmp(command, ourCommands[i].commandName))
-        	return &ourCommands[i];
-    }
-    return NULL;
-}
-
-/*a func to check if a string is one of the commands*/
 int isACommand(char line []){
   if(!strcmp(line,"mov"))
     return 1;
@@ -170,7 +134,6 @@ int isACommand(char line []){
   return 0;
 }
 
-/* func that checks if a given string is one of the valid registers and if so returns it's number */
 int isARegister(char line[]){
   move_to_none_white(line, 0);
   if(!strcmp(line,"r0"))
@@ -205,16 +168,17 @@ int isARegister(char line[]){
     return 14;  
   if(!strcmp(line,"r15"))
     return 15;
+  
   return -1;
 }
 
 int isNameOk(char line []){
   int i = 0;
-  if(!isalpha(line[i]) || isARegister(line) || isACommand(line)){
+  if(!isalpha(line[i]) || isARegister(line) != -1 || isACommand(line) || strlen(line) > MAX_LABEL_LENGTH){
     return 0;
   }
   while(line[i] != '\0'){
-    if(!isalpha(line[i]) && !isANaturalNum(line[i])){
+    if(!isalpha(line[i]) && !isdigit(line[i])){
       return 0;
     }
     i++;
@@ -222,29 +186,38 @@ int isNameOk(char line []){
   return 1;
 }
 
-int giveTheLastNoneWhiteIndex(char line[]){
-  int i = 1;
-  int firstiter = 1;
-  if(!isspace(line[strlen(line) - 1])){
-    return strlen(line) - 1;
-  }
-  while( !isspace(line[strlen(line) - i ]) ){
-    i++;
-  }
-  return (strlen(line)-i-2);
+
+commandsStruct *findCommand(char * command)
+{
+    int i = 0;
+    for(; i < 17; i++)
+    {
+        if(!strcmp(command, ourCommands[i].commandName))
+        return &ourCommands[i];
+    }
+    return NULL;
 }
 
+int isLableDec(char *lable)
+{
+    if(lable[strlen(lable)-1] == ':')
+        return 1;
+    return 0;
+}
+
+
+/* count how many words there is in a given string */
 int countWords(char line []){
   int i = 0, word = 0, inWord = 0;
 
   /* loop till end of string */
   while(line[i] != '\0'){
     
-    if(!isspace(line[i]) && inWord == 0){
+    if(!(isspace(line[i]) || line[i] == ',') && inWord == 0){
       word++;
       inWord = 1;
     }
-    if(isspace(line[i])){
+    if(isspace(line[i]) || line[i] == ',' ){
       inWord = 0;
     }
     i++;
@@ -252,32 +225,78 @@ int countWords(char line []){
   return word;
 }
 
-/* func that free the memory stormage from a given WORD */
-void freeList1(WORD *head)
-{
-  WORD *current = head;
-  WORD *nextOne = head->next;
 
-  while(current != NULL)
-  {
-    free(current);
-    current = nextOne;
-    if( current != NULL)
-      nextOne = current->next;
-  }
+/* delete white space in the end of a string */
+void trimTrailing(char * str){
+    int index = -1;
+    int i;
+
+    i = 0;
+    while(str[i] != '\0')
+    {
+        if(str[i] != ' ' && str[i] != '\t' && str[i] != '\n')
+        {
+            index= i;
+        }
+
+        i++;
+    }
+    str[index + 1] = '\0';
 }
 
-/* func that free the memory stormage from a given LIST */
-void freeList2(symbolLink *head)
-{
-  symbolLink *current = head;
-  symbolLink *nextOne = head->next;
-  while(current != NULL)
-  {
-    free(current);
-    current = nextOne;
-    if( current != NULL)
-      nextOne = current->next;
+
+/* count commas */
+int countCommas(char line []){
+  int i = 0;
+  int commas = 0;
+  while(line[i] != '\0'){
+    if (line[i] == ',')
+      commas++;
+    i++;
   }
+  return commas;
 }
 
+/* check if the numbers of words in a given number is the same as a given integer number */
+/* delete? */
+int isCurNumOfWords(char line[], int a){
+  if(countWords(line) < a){
+  }
+  if(countWords(line) > a){
+  }
+  if(countWords(line) == a){
+    return 1;
+  }
+  return 0;
+}
+
+/* check if the number of a commas in a given string is equal to a given number */
+int isValidCommas(int num, char str[]){
+  int i = 0;
+  int count = 0;
+  int inARow = 0;
+  while(str[i]!='\0'){
+    /* there is two commas in a row */
+    if(str[i] == ',' && inARow == 1){
+      return 0;
+    }
+    /* found a commma char and increase the counter */
+    if(str[i] == ',' && inARow == 0){
+      count++;
+      inARow = 1;
+    }
+    if(str[i] != ',' && !isspace(str[i]) ){
+      inARow = 0;
+    }
+    i++;
+  }
+  /* the string has same amount of commas as the given num */
+  if(count == num){
+    return 1;
+  }
+  if(count < num){
+  }
+  if(count > num){
+  }
+  return 0;
+}

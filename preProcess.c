@@ -4,8 +4,9 @@
 #include <ctype.h>
 
 #include "preProcess.h"
+#include "utils.h"
 
- MACRO *push(char macroName[], char macroCommands[][MAX_LINE_LENGTH], int numOfCommands, MACRO *head){
+MACRO *push(char macroName[], char macroCommands[][MAX_LINE_LENGTH], int numOfCommands, MACRO *head){
      int i = 0;
      MACRO *link = (struct MACRO*)malloc(sizeof(struct MACRO));
      strcpy(link->macroName, macroName);
@@ -29,16 +30,18 @@ void preProcessing(FILE *fileName, char *nameOfFile){
     int inMacro = 0;
     int j, linesInMacro = 0;
 
-    FILE *objectFile = fopen(strcat(nameOfFile, ".ob"), "w");
+    FILE *objectFile;
+    objectFile = fopen(strcat(nameOfFile, ".ob"), "w");
+
     while (fgets(line, MAX_LINE_LENGTH, fileName))
     {
         strcpy(lineCopy,line);
         if(!skip(line)){
-            token = strtok(lineCopy, CUT);
+            token = strtok(lineCopy, CUT1);
             if(inMacro == 0){
                 if(!strcmp(token, "macro")){
                     inMacro = 1;
-                    token = strtok(NULL, CUT);
+                    token = strtok(NULL, CUT1);
                     strcpy(macroName ,token);
                 } else{
                     macroFound = find(head, token);
@@ -61,17 +64,19 @@ void preProcessing(FILE *fileName, char *nameOfFile){
             }
         }
     } 
+    fclose(objectFile);
 }
 
+
 struct MACRO* find(struct MACRO *head, char macroName[]) {
-    MACRO* current = head;
+    struct MACRO* current = head;
     if(head == NULL)
         return NULL;
-   while(current != NULL) {
+    while(current != NULL) {
         if(!strcmp(current->macroName, macroName))
             return current;
         else 
          current = current->next;
-   }
-   return NULL;
+    }
+    return NULL;
 }

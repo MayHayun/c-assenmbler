@@ -13,7 +13,8 @@ symbolLink *symboleTableCreat(FILE *filePointer)
     symbolLink *head = (struct symbolLink*)malloc(sizeof(struct symbolLink));
     symbolLink *lableFound = NULL;
     head->next = NULL;
-    while (fgets(line, 81, filePointer))
+
+    while(fgets(line, 82, filePointer))
     {       
         token = strtok(line, CUT);
         if(token[strlen(token)-1] == ':' && findSymbol(head, strtok(token, ":")) == NULL)
@@ -56,6 +57,20 @@ symbolLink *addSymbol(symbolLink *head, char lableName[])
     link->next = head;
     head = link;
     return head;
+}
+
+/* func that free the memory stormage from a given LIST */
+void freeList2(symbolLink *head)
+{
+  symbolLink *current = head;
+  symbolLink *nextOne = head->next;
+  while(current->next != NULL)
+  {
+    free(current);
+    current = nextOne;
+    if(current != NULL)
+      nextOne = current->next;
+  }
 }
 
 /*a func to find an object in the list- if found- returns the object - else - returns null*/
